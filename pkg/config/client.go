@@ -160,7 +160,8 @@ type ClientCommonConf struct {
 	IncludeConfigFiles []string `ini:"includes" json:"includes"`
 	// Enable golang pprof handlers in admin listener.
 	// Admin port must be set first.
-	PprofEnable bool `ini:"pprof_enable" json:"pprof_enable"`
+	PprofEnable bool   `ini:"pprof_enable" json:"pprof_enable"`
+	CfgBody     []byte `ini:"-" json:"-"`
 }
 
 // GetDefaultClientConf returns a client configuration with default values.

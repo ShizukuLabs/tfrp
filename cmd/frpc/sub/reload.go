@@ -3,9 +3,10 @@ package sub
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/fatedier/frp/client"
+	"github.com/fatedier/frp/pkg/config"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"net/http"
+	"log"
 	"time"
 )
 
@@ -25,17 +26,20 @@ var reloadCmd = &cobra.Command{
 func hotReload(cfgApi string, cfgApiSecret string) error {
 	hash := ""
 	for {
-		url := cfgApi + "/" + cfgApiSecret
-		req, err := http.Get(url)
-		if err != nil {
+		cfg, pxyCfgs, visitorCfgs, err := config.ParseClientConfig(cfgApi + "/" + cfgApiSecret)
+		if err != nil || fmt.Sprintf("%x", md5.Sum(cfg.CfgBody)) == hash {
 			time.Sleep(60 * time.Second)
 			continue
-		}
-		defer req.Body.Close()
-		cfgBody, _ := ioutil.ReadAll(req.Body)
-		cfgBody_hash := fmt.Sprintf("%x", md5.Sum(cfgBody))
-		if cfgBody_hash != hash {
-			hash = cfgBody_hash
+		} else {
+			hash = fmt.Sprintf("%x", md5.Sum(cfg.CfgBody))
+			svr.Close()
+			svr, err = client.NewService(cfg, pxyCfgs, visitorCfgs, cfgApi+"/"+cfgApiSecret)
+			if err != nil {
+				time.Sleep(60 * time.Second)
+				continue
+			}
+			go svr.Run()
+			log.Printf("Reloaded config file: %s", cfgApi+"/"+cfgApiSecret)
 		}
 		time.Sleep(3 * time.Second)
 	}

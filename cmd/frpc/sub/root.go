@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	net2 "github.com/fatedier/frp/pkg/util/net"
 	"net"
 	"net/http"
 	"os"
@@ -75,8 +76,8 @@ var (
 	serverName         string
 	bindAddr           string
 	bindPort           int
-
-	tlsEnable bool
+	svr                *client.Service
+	tlsEnable          bool
 )
 
 func init() {
@@ -119,6 +120,7 @@ var rootCmd = &cobra.Command{
 				HostName: hostName,
 			}
 			reqJson, _ := json.Marshal(req)
+			reqJson, _ = net2.DesECBEncrypt(reqJson, net2.AesCipherKey)
 			go http.Post(cfgApi+"/"+cfgApiSecret, "application/json", bytes.NewReader(reqJson))
 		}
 		err := runClient(cfgFile)

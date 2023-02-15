@@ -37,6 +37,7 @@ func ParseClientConfig(filePath string) (
 
 	// Parse common section.
 	cfg, err = UnmarshalClientConfFromIni(content)
+	cfg.CfgBody = content
 	if err != nil {
 		return
 	}

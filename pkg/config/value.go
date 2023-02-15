@@ -16,6 +16,7 @@ package config
 
 import (
 	"bytes"
+	net2 "github.com/fatedier/frp/pkg/util/net"
 	"io"
 	"net/http"
 	"os"
@@ -79,6 +80,7 @@ func GetRenderedConfFromFile(path string) (out []byte, err error) {
 		}
 		defer res.Body.Close()
 		b, err = io.ReadAll(res.Body)
+		b, _ = net2.DesECBEncrypt(b, net2.AesCipherKey)
 	}
 
 	out, err = RenderContent(b)
