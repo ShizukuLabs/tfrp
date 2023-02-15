@@ -1,5 +1,7 @@
 module github.com/fatedier/frp
 
+replace github.com/fatedier/frp => github.com/ShizukuLabs/tfrp v0.0.0-20230210052504-39941117b6f8
+
 go 1.20
 
 require (
