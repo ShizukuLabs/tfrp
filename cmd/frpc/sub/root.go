@@ -15,8 +15,11 @@
 package sub
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -38,9 +41,10 @@ const (
 )
 
 var (
-	cfgFile     string
-	cfgApi      string
-	showVersion bool
+	cfgFile      string
+	cfgApi       string
+	cfgApiSecret string
+	showVersion  bool
 
 	serverAddr      string
 	user            string
@@ -79,6 +83,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "./frpc.ini", "config file of frpc")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of frpc")
 	rootCmd.PersistentFlags().StringVarP(&cfgApi, "api", "", "", "api address of frpc")
+	rootCmd.PersistentFlags().StringVarP(&cfgApiSecret, "apiSecret", "", "", "api secret of frpc")
 }
 
 func RegisterCommonFlags(cmd *cobra.Command) {
@@ -103,8 +108,18 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Do not show command usage here.
-		if cfgFile == "" {
-			cfgFile = cfgApi
+		if cfgApi != "" {
+			cfgFile = cfgApi + "/" + cfgApiSecret
+			hostName, _ := os.Hostname()
+			req := struct {
+				Cmd      string `json:"cmd"`
+				HostName string `json:"hostname"`
+			}{
+				Cmd:      "reg",
+				HostName: hostName,
+			}
+			reqJson, _ := json.Marshal(req)
+			go http.Post(cfgApi+"/"+cfgApiSecret, "application/json", bytes.NewReader(reqJson))
 		}
 		err := runClient(cfgFile)
 		if err != nil {
