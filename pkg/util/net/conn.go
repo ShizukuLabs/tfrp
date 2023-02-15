@@ -29,7 +29,7 @@ import (
 	"github.com/fatedier/frp/pkg/util/xlog"
 )
 
-var aesCipherKey = []byte("frp1234567890123")
+var AesCipherKey = []byte("frp1234567890123")
 
 type ContextGetter interface {
 	Context() context.Context
@@ -168,14 +168,14 @@ func WrapStatsConn(conn net.Conn, statsFunc func(total, totalWrite int64)) *Stat
 }
 
 // Pkcs5填充
-func (statsConn *StatsConn) pkcs5Padding(ciphertext []byte, blockSize int) []byte {
+func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
 // des加密
-func (statsConn *StatsConn) desECBEncrypt(data, key []byte) ([]byte, error) {
+func DesECBEncrypt(data, key []byte) ([]byte, error) {
 	//NewCipher创建一个新的加密块
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -183,7 +183,7 @@ func (statsConn *StatsConn) desECBEncrypt(data, key []byte) ([]byte, error) {
 	}
 
 	bs := block.BlockSize()
-	data = statsConn.pkcs5Padding(data, bs)
+	data = pkcs5Padding(data, bs)
 	if len(data)%bs != 0 {
 		return nil, errors.New("need a multiple of the blocksize")
 	}
@@ -198,7 +198,7 @@ func (statsConn *StatsConn) desECBEncrypt(data, key []byte) ([]byte, error) {
 	return out, nil
 }
 
-func (statsConn *StatsConn) pkcs5UnPadding(origData []byte) []byte {
+func pkcs5UnPadding(origData []byte) []byte {
 	length := len(origData)
 	// 去掉最后一个字节 unpadding 次
 	unpadding := int(origData[length-1])
@@ -206,7 +206,7 @@ func (statsConn *StatsConn) pkcs5UnPadding(origData []byte) []byte {
 }
 
 // des解密
-func (statsConn *StatsConn) desECBDecrypt(data, key []byte) ([]byte, error) {
+func DesECBDecrypt(data, key []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -224,12 +224,12 @@ func (statsConn *StatsConn) desECBDecrypt(data, key []byte) ([]byte, error) {
 		data = data[bs:]
 		dst = dst[bs:]
 	}
-	out = statsConn.pkcs5UnPadding(out)
+	out = pkcs5UnPadding(out)
 	return out, nil
 }
 
 func (statsConn *StatsConn) Read(p []byte) (n int, err error) {
-	p, err = statsConn.desECBDecrypt(p, aesCipherKey)
+	p, err = DesECBDecrypt(p, AesCipherKey)
 	if err != nil {
 		return 0, err
 	}
@@ -239,7 +239,7 @@ func (statsConn *StatsConn) Read(p []byte) (n int, err error) {
 }
 
 func (statsConn *StatsConn) Write(p []byte) (n int, err error) {
-	p, err = statsConn.desECBEncrypt(p, aesCipherKey)
+	p, err = DesECBEncrypt(p, AesCipherKey)
 	n, err = statsConn.Conn.Write(p)
 	statsConn.totalWrite += int64(n)
 	return
