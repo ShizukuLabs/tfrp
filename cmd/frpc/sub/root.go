@@ -16,13 +16,10 @@ package sub
 
 import (
 	"fmt"
-	"io/fs"
 	"net"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
@@ -42,7 +39,7 @@ const (
 
 var (
 	cfgFile     string
-	cfgDir      string
+	cfgApi      string
 	showVersion bool
 
 	serverAddr      string
@@ -80,8 +77,8 @@ var (
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "./frpc.ini", "config file of frpc")
-	rootCmd.PersistentFlags().StringVarP(&cfgDir, "config_dir", "", "", "config directory, run one frpc service for each file in config directory")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of frpc")
+	rootCmd.PersistentFlags().StringVarP(&cfgApi, "api", "", "", "api address of frpc")
 }
 
 func RegisterCommonFlags(cmd *cobra.Command) {
@@ -105,33 +102,10 @@ var rootCmd = &cobra.Command{
 			return nil
 		}
 
-		// If cfgDir is not empty, run multiple frpc service for each config file in cfgDir.
-		// Note that it's only designed for testing. It's not guaranteed to be stable.
-		if cfgDir != "" {
-			var wg sync.WaitGroup
-			_ = filepath.WalkDir(cfgDir, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return nil
-				}
-				if d.IsDir() {
-					return nil
-				}
-				wg.Add(1)
-				time.Sleep(time.Millisecond)
-				go func() {
-					defer wg.Done()
-					err := runClient(path)
-					if err != nil {
-						fmt.Printf("frpc service error for config file [%s]\n", path)
-					}
-				}()
-				return nil
-			})
-			wg.Wait()
-			return nil
-		}
-
 		// Do not show command usage here.
+		if cfgFile == "" {
+			cfgFile = cfgApi
+		}
 		err := runClient(cfgFile)
 		if err != nil {
 			fmt.Println(err)

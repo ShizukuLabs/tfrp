@@ -16,6 +16,8 @@ package config
 
 import (
 	"bytes"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"text/template"
@@ -64,9 +66,19 @@ func RenderContent(in []byte) (out []byte, err error) {
 
 func GetRenderedConfFromFile(path string) (out []byte, err error) {
 	var b []byte
-	b, err = os.ReadFile(path)
-	if err != nil {
-		return
+	if !strings.Contains(path, ":") {
+		b, err = os.ReadFile(path)
+		if err != nil {
+			return
+		}
+	} else {
+		// get
+		res, err := http.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+		b, err = io.ReadAll(res.Body)
 	}
 
 	out, err = RenderContent(b)
