@@ -29,7 +29,7 @@ import (
 	"github.com/fatedier/frp/pkg/util/xlog"
 )
 
-var AesCipherKey = []byte("frp1234567890123")
+var AesCipherKey = []byte("12345678")
 
 type ContextGetter interface {
 	Context() context.Context

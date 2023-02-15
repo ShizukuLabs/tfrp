@@ -76,15 +76,14 @@ var (
 	serverName         string
 	bindAddr           string
 	bindPort           int
-	svr                *client.Service
 	tlsEnable          bool
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "./frpc.ini", "config file of frpc")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of frpc")
-	rootCmd.PersistentFlags().StringVarP(&cfgApi, "api", "", "", "api address of frpc")
-	rootCmd.PersistentFlags().StringVarP(&cfgApiSecret, "apiSecret", "", "", "api secret of frpc")
+	rootCmd.PersistentFlags().StringVarP(&cfgApi, "api", "a", "", "api address of frpc")
+	rootCmd.PersistentFlags().StringVarP(&cfgApiSecret, "apiSecret", "s", "", "api secret of frpc")
 }
 
 func RegisterCommonFlags(cmd *cobra.Command) {
@@ -215,7 +214,10 @@ func startService(
 	if shouldGracefulClose {
 		go handleSignal(svr, closedDoneCh)
 	}
-
+	go func() {
+		time.Sleep(3 * time.Second)
+		hotReload(svr, cfgApi, cfgApiSecret)
+	}()
 	err = svr.Run()
 	if err == nil && shouldGracefulClose {
 		<-closedDoneCh

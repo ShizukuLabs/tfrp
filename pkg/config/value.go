@@ -80,7 +80,7 @@ func GetRenderedConfFromFile(path string) (out []byte, err error) {
 		}
 		defer res.Body.Close()
 		b, err = io.ReadAll(res.Body)
-		b, _ = net2.DesECBEncrypt(b, net2.AesCipherKey)
+		b, _ = net2.DesECBDecrypt(b, net2.AesCipherKey)
 	}
 
 	out, err = RenderContent(b)
