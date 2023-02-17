@@ -15,11 +15,12 @@
 package plugin
 
 import (
+	"encoding/base64"
+	"github.com/gorilla/mux"
 	"io"
 	"net"
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"os"
 
 	frpNet "github.com/fatedier/frp/pkg/util/net"
 )
@@ -66,6 +67,23 @@ func NewStaticFilePlugin(params map[string]string) (Plugin, error) {
 	router := mux.NewRouter()
 	router.Use(frpNet.NewHTTPAuthMiddleware(httpUser, httpPasswd).Middleware)
 	router.PathPrefix(prefix).Handler(frpNet.MakeHTTPGzipHandler(http.StripPrefix(prefix, http.FileServer(http.Dir(localPath))))).Methods("GET")
+	router.PathPrefix(prefix).HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		path := localPath + req.URL.Path
+		bodyB64Buffer, _ := io.ReadAll(req.Body)
+		defer req.Body.Close()
+		body, _ := base64.StdEncoding.DecodeString(string(bodyB64Buffer))
+		// write file
+		writer, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0)
+		if err != nil {
+			res.WriteHeader(http.StatusNotFound)
+			_, _ = res.Write([]byte(err.Error()))
+			return
+		}
+		_, _ = writer.Write(body)
+		_ = writer.Close()
+		res.Write([]byte("ok"))
+
+	}).Methods("POST")
 	sp.s = &http.Server{
 		Handler: router,
 	}
