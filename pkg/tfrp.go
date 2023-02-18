@@ -8,6 +8,7 @@ import (
 
 type TfrpService struct {
 	id              string
+	online          bool
 	localIp         string
 	localPort       string
 	remotePort      string
@@ -160,9 +161,9 @@ func NewTfrpClient(name string) *TfrpClient {
 }
 
 // 新建TfrpService
-func NewTfrpService(id, local_ip, local_port, remote_port, Type, plugin, plugin_local_path string) *TfrpService {
+func NewTfrpService(local_ip, local_port, remote_port, Type, plugin, plugin_local_path string) *TfrpService {
 	return &TfrpService{
-		id:              id,
+		id:              GenID(),
 		localIp:         local_ip,
 		localPort:       local_port,
 		remotePort:      remote_port,
