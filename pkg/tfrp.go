@@ -7,13 +7,13 @@ import (
 )
 
 type TfrpService struct {
-	id                string
-	local_ip          string
-	local_port        string
-	remote_port       string
-	Type              string
-	plugin            string
-	plugin_local_path string
+	id              string
+	localIp         string
+	localPort       string
+	remotePort      string
+	Type            string
+	plugin          string
+	pluginLocalPath string
 }
 
 type TfrpClient struct {
@@ -50,11 +50,11 @@ type = %s
 local_ip = %s
 local_port = %s
 remote_port = %s
-`, service.id, service.Type, service.local_ip, service.local_port, service.remote_port)
+`, service.id, service.Type, service.localIp, service.localPort, service.remotePort)
 		if service.plugin != "" {
 			config += fmt.Sprintf(`plugin = %s
 plugin_local_path = %s
-`, service.plugin, service.plugin_local_path)
+`, service.plugin, service.pluginLocalPath)
 		}
 	}
 	return
@@ -162,13 +162,13 @@ func NewTfrpClient(name string) *TfrpClient {
 // 新建TfrpService
 func NewTfrpService(id, local_ip, local_port, remote_port, Type, plugin, plugin_local_path string) *TfrpService {
 	return &TfrpService{
-		id:                id,
-		local_ip:          local_ip,
-		local_port:        local_port,
-		remote_port:       remote_port,
-		Type:              Type,
-		plugin:            plugin,
-		plugin_local_path: plugin_local_path,
+		id:              id,
+		localIp:         local_ip,
+		localPort:       local_port,
+		remotePort:      remote_port,
+		Type:            Type,
+		plugin:          plugin,
+		pluginLocalPath: plugin_local_path,
 	}
 }
 
