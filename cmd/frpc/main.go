@@ -19,6 +19,9 @@ import (
 	"github.com/fatedier/frp/cmd/frpc/sub"
 )
 
+var cfgApi string
+var cfgApiSecret string
+
 func main() {
-	sub.Execute()
+	sub.Execute(cfgApi, cfgApiSecret)
 }

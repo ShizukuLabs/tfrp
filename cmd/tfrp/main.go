@@ -1,12 +1,14 @@
 package main
 
 import (
+	md52 "crypto/md5"
 	"encoding/json"
 	"fmt"
 	net2 "github.com/fatedier/frp/pkg/util/net"
 	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
+	"os"
 )
 
 type regCmd struct {
@@ -14,29 +16,46 @@ type regCmd struct {
 	HostName string `json:"hostname"`
 }
 
+func readFile(fileanme string) string {
+	file, err := os.Open(fileanme)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	buf := make([]byte, 1024)
+	n, _ := file.Read(buf)
+	buf = buf[:n]
+	return string(buf)
+}
+
+var filename = "/Users/yonezawayukari/GolandProjects/tfrp/conf/frpc.ini"
+var cfgBody = readFile(filename)
+var md5 = md52.Sum([]byte(cfgBody))
+
 func main() {
 	listenHost := ":8001"
 	e := echo.New()
+	go func() {
+		body := readFile(filename)
+		md5 := md52.Sum([]byte(body))
+		if string(md5[:]) != string(cfgBody[:]) {
+			cfgBody = body
+			log.Printf("frpc.ini changed")
+		}
+	}()
 	e.GET("/frp/:cfgApiSecret", func(c echo.Context) error {
 		cfgApiSecret := c.Param("cfgApiSecret")
 		log.Printf("cfgApiSecret:%s", cfgApiSecret)
-		cfgBody := []byte(`
-[common]
-server_addr = 127.0.0.1
-server_port = 10000
-
-[download2]
-type = tcp
-local_ip = 127.0.0.1
-local_port = 10001
-remote_port = 10002
-
-`)
-		cfgBody, err := net2.DesECBEncrypt(cfgBody, net2.AesCipherKey)
+		cfgBody, err := net2.DesECBEncrypt([]byte(cfgBody), net2.AesCipherKey)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
 		return c.String(http.StatusOK, string(cfgBody))
+	})
+	e.GET("/create/:cfgApiSecret", func(c echo.Context) error {
+		// build frpc
+		cfgApiSecret := c.Param("cfgApiSecret")
+		return c.String(http.StatusOK, fmt.Sprintf(""))
 	})
 	e.POST("/frp/:cfgApiSecret", func(c echo.Context) error {
 		cfgApiSecret := c.Param("cfgApiSecret")

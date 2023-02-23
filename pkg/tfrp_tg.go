@@ -2,24 +2,32 @@ package pkg
 
 import (
 	"context"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"sync"
 )
 
 type TfrpTG struct {
-	tfrp *Tfrp
-	wg   *sync.WaitGroup
-	ctx  context.Context
+	tfrp    *Tfrp
+	wg      *sync.WaitGroup
+	ctx     context.Context
+	tgToken string
+	tg      *tgbotapi.BotAPI
 }
 
-func NewTfrpTG(tfrp *Tfrp) *TfrpTG {
-	return &TfrpTG{tfrp: tfrp}
+func NewTfrpTG(tgToken string, tfrp *Tfrp) *TfrpTG {
+	return &TfrpTG{tfrp: tfrp, tgToken: tgToken}
 }
 
 // 開始監聽frps的api
-func (t *TfrpTG) Start() {
+func (t *TfrpTG) Start() (err error) {
 	t.wg = &sync.WaitGroup{}
 	t.wg.Add(1)
 	go t.UpdateClientStatus()
+	//創建telegram機器人
+	if t.tg, err = tgbotapi.NewBotAPI(t.tgToken); err != nil {
+		return err
+	}
+	return
 }
 
 // 等待

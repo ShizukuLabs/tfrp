@@ -17,8 +17,11 @@ package config
 import (
 	"bytes"
 	"fmt"
+	"github.com/fatedier/frp/pkg/util/util"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func ParseClientConfig(filePath string) (
@@ -34,12 +37,15 @@ func ParseClientConfig(filePath string) (
 	}
 	configBuffer := bytes.NewBuffer(nil)
 	configBuffer.Write(content)
-
 	// Parse common section.
-	cfg, err = UnmarshalClientConfFromIni(content)
-	cfg.CfgBody = content
-	if err != nil {
-		return
+	for {
+		cfg, err = UnmarshalClientConfFromIni(content)
+		cfg.CfgBody = content
+		if err != nil {
+			log.Printf("parse config error: %v", err)
+			util.RandomSleep(10*time.Second, 0.9, 1.1)
+		}
+		break
 	}
 	cfg.Complete()
 	if err = cfg.Validate(); err != nil {

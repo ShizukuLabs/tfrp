@@ -80,10 +80,10 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "./frpc.ini", "config file of frpc")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file of frpc")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of frpc")
-	rootCmd.PersistentFlags().StringVarP(&cfgApi, "api", "a", "", "api address of frpc")
-	rootCmd.PersistentFlags().StringVarP(&cfgApiSecret, "apiSecret", "s", "", "api secret of frpc")
+	//rootCmd.PersistentFlags().StringVarP(&cfgApi, "api", "a", "http://127.0.0.1:8001/frp", "api address of frpc")
+	//rootCmd.PersistentFlags().StringVarP(&cfgApiSecret, "apiSecret", "s", "af", "api secret of frpc")
 }
 
 func RegisterCommonFlags(cmd *cobra.Command) {
@@ -131,7 +131,9 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Execute() {
+func Execute(Api string, ApiSecret string) {
+	cfgApi = Api
+	cfgApiSecret = ApiSecret
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
