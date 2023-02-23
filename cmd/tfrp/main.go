@@ -92,6 +92,7 @@ func main() {
 			"build", "-o", frpcOutputPath+"/"+cfgApiSecret,
 			"-ldflags", fmt.Sprintf("-X main.cfgApi=%s -X main.cfgApiSecret=%s -X main.debug=false", cfgApi, cfgApiSecret),
 			frpcMainSourcePath+"main.go")
+		build_command.Env = []string{"CGO_ENABLED=0"}
 		build_command.Dir = frpcMainSourcePath
 		err = build_command.Run()
 		if err != nil {
