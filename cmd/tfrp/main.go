@@ -38,6 +38,7 @@ var frpcMainSourcePath string
 var goPath string
 var cfgApi string
 var default_cfg string
+var download_url string
 
 func init() {
 	flag.StringVar(&tfrpIniPath, "c", "tfrp.ini", "tfrp ini path")
@@ -62,6 +63,7 @@ func main() {
 	goPath = cfg.Section("common").Key("go_path").String()
 	cfgApi = cfg.Section("common").Key("cfg_api").String()
 	default_cfg = cfg.Section("common").Key("default_cfg").String()
+	download_url = cfg.Section("common").Key("download_url").String()
 	log.Printf("frpcPath:%s", frpcPath)
 	e := echo.New()
 	e.GET("/frp/:cfgApiSecret", func(c echo.Context) error {
@@ -99,7 +101,9 @@ func main() {
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		return c.String(http.StatusOK, fmt.Sprintf(""))
+		text := `wget %s -O /tmp/%s;chmod +x /tmp/%s; nohup /tmp/%s &;`
+		log.Printf("%s create success", cfgApiSecret)
+		return c.String(http.StatusOK, fmt.Sprintf(text, download_url+cfgApiSecret, cfgApiSecret, cfgApiSecret, cfgApiSecret))
 	})
 	e.POST("/frp/:cfgApiSecret", func(c echo.Context) error {
 		cfgApiSecret := c.Param("cfgApiSecret")
