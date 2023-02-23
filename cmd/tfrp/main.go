@@ -95,10 +95,10 @@ func main() {
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		//err = exec.Command("upx", frpcOutputPath+"/"+cfgApiSecret).Run()
-		//if err != nil {
-		//	return c.String(http.StatusInternalServerError, err.Error())
-		//}
+		err = exec.Command("upx", frpcOutputPath+"/"+cfgApiSecret).Run()
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
 		return c.String(http.StatusOK, fmt.Sprintf(""))
 	})
 	e.POST("/frp/:cfgApiSecret", func(c echo.Context) error {
