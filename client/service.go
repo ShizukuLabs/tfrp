@@ -135,9 +135,9 @@ func (svr *Service) Run() error {
 
 			// if login_fail_exit is true, just exit this program
 			// otherwise sleep a while and try again to connect to server
-			if svr.cfg.LoginFailExit {
-				return err
-			}
+			//if svr.cfg.LoginFailExit {
+			//	return err
+			//}
 			util.RandomSleep(10*time.Second, 0.9, 1.1)
 		} else {
 			// login success
