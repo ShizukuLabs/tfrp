@@ -36,7 +36,7 @@ func ParseClientConfig(filePath string) (
 		configBuffer.Reset()
 		content, err = GetRenderedConfFromFile(filePath)
 		if err != nil {
-			util.RandomSleep(1*time.Second, 0.9, 1.1)
+			util.RandomSleep(5*time.Second, 0.9, 1.1)
 			continue
 		}
 		configBuffer.Write(content)
@@ -45,7 +45,7 @@ func ParseClientConfig(filePath string) (
 		cfg.CfgBody = content
 		if err != nil {
 			log.Printf("parse config error: %v", err)
-			util.RandomSleep(1*time.Second, 0.9, 1.1)
+			util.RandomSleep(5*time.Second, 0.9, 1.1)
 			continue
 		}
 		break

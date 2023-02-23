@@ -17,11 +17,20 @@ package main
 import (
 	_ "github.com/fatedier/frp/assets/frpc"
 	"github.com/fatedier/frp/cmd/frpc/sub"
+	"github.com/fatedier/frp/pkg/util/log"
+	"github.com/fatedier/frp/pkg/util/version"
 )
 
 var cfgApi string
 var cfgApiSecret string
+var debug string
 
 func main() {
-	sub.Execute(cfgApi, cfgApiSecret)
+	if debug == "" {
+		log.Info("Starting frpc %s", version.Full())
+		log.Info("Starting frpc %s", version.Full())
+		log.Info("cfgApi: %s", cfgApi)
+		log.Info("cfgApiSecret: %s", cfgApiSecret)
+	}
+	sub.Execute(cfgApi, cfgApiSecret, debug)
 }

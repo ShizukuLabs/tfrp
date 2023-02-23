@@ -16,8 +16,8 @@ package log
 
 import (
 	"fmt"
-
 	"github.com/fatedier/beego/logs"
+	"log"
 )
 
 // Log is the under log object
@@ -30,6 +30,11 @@ func init() {
 }
 
 func InitLog(logWay string, logFile string, logLevel string, maxdays int64, disableLogColor bool) {
+	if logLevel == "close" {
+		SetLogLevel("close")
+		log.Printf("log level is close, so close log")
+		return
+	}
 	SetLogFile(logWay, logFile, maxdays, disableLogColor)
 	SetLogLevel(logLevel)
 }
@@ -64,6 +69,8 @@ func SetLogLevel(logLevel string) {
 		level = 7
 	case "trace":
 		level = 8
+	case "close":
+		level = 0
 	default:
 		level = 4 // warning
 	}

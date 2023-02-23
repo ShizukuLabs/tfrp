@@ -138,7 +138,7 @@ func (svr *Service) Run() error {
 			//if svr.cfg.LoginFailExit {
 			//	return err
 			//}
-			util.RandomSleep(1*time.Second, 0.9, 1.1)
+			util.RandomSleep(10*time.Second, 0.9, 1.1)
 			continue
 		} else {
 			// login success

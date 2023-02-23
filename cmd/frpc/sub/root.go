@@ -77,6 +77,7 @@ var (
 	bindAddr           string
 	bindPort           int
 	tlsEnable          bool
+	_debug             = true
 )
 
 func init() {
@@ -131,9 +132,12 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Execute(Api string, ApiSecret string) {
+func Execute(Api string, ApiSecret string, debug string) {
 	cfgApi = Api
 	cfgApiSecret = ApiSecret
+	if debug != "" {
+		_debug = false
+	}
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -169,12 +173,13 @@ func parseClientCommonCfgFromCmd() (cfg config.ClientCommonConf, err error) {
 	cfg.LogFile = logFile
 	cfg.LogMaxDays = int64(logMaxDays)
 	cfg.DisableLogColor = disableLogColor
-
+	if !_debug {
+		cfg.LogLevel = "close"
+	}
 	// Only token authentication is supported in cmd mode
 	cfg.ClientConfig = auth.GetDefaultClientConf()
 	cfg.Token = token
 	cfg.TLSEnable = tlsEnable
-
 	cfg.Complete()
 	if err = cfg.Validate(); err != nil {
 		err = fmt.Errorf("parse config error: %v", err)
@@ -197,6 +202,9 @@ func startService(
 	visitorCfgs map[string]config.VisitorConf,
 	cfgFile string,
 ) (err error) {
+	if !_debug {
+		cfg.LogLevel = "close"
+	}
 	log.InitLog(cfg.LogWay, cfg.LogFile, cfg.LogLevel,
 		cfg.LogMaxDays, cfg.DisableLogColor)
 

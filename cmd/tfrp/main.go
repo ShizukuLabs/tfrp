@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 )
 
 type regCmd struct {
@@ -32,6 +33,11 @@ func readFile(fileanme string) string {
 var tfrpIniPath string
 var tfrpPort int
 var frpcPath string
+var frpcOutputPath string
+var frpcMainSourcePath string
+var goPath string
+var cfgApi string
+var default_cfg string
 
 func init() {
 	flag.StringVar(&tfrpIniPath, "c", "tfrp.ini", "tfrp ini path")
@@ -51,6 +57,11 @@ func main() {
 		log.Panic(err)
 	}
 	frpcPath = cfg.Section("common").Key("path").String()
+	frpcOutputPath = cfg.Section("common").Key("output_path").String()
+	frpcMainSourcePath = cfg.Section("common").Key("main_source_path").String()
+	goPath = cfg.Section("common").Key("go_path").String()
+	cfgApi = cfg.Section("common").Key("cfg_api").String()
+	default_cfg = cfg.Section("common").Key("default_cfg").String()
 	log.Printf("frpcPath:%s", frpcPath)
 	e := echo.New()
 	e.GET("/frp/:cfgApiSecret", func(c echo.Context) error {
@@ -66,11 +77,28 @@ func main() {
 		// build frpc
 		cfgApiSecret := c.Param("cfgApiSecret")
 		//make file
-		create, err := os.Create(frpcPath + "/" + cfgApiSecret + ".ini")
+		if _, err := os.Stat(frpcPath + "/" + cfgApiSecret + ".ini"); os.IsNotExist(err) {
+			create, err := os.Create(frpcPath + "/" + cfgApiSecret + ".ini")
+			if err != nil {
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
+			defer create.Close()
+			_, _ = create.Write([]byte(readFile(default_cfg)))
+		}
+		// go
+		build_command := exec.Command(goPath,
+			"build", "-o", frpcOutputPath+"/"+cfgApiSecret,
+			"-ldflags", fmt.Sprintf("-X main.cfgApi=%s -X main.cfgApiSecret=%s -X main.debug=false", cfgApi, cfgApiSecret),
+			frpcMainSourcePath+"main.go")
+		build_command.Dir = frpcMainSourcePath
+		err = build_command.Run()
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		defer create.Close()
+		//err = exec.Command("upx", frpcOutputPath+"/"+cfgApiSecret).Run()
+		//if err != nil {
+		//	return c.String(http.StatusInternalServerError, err.Error())
+		//}
 		return c.String(http.StatusOK, fmt.Sprintf(""))
 	})
 	e.POST("/frp/:cfgApiSecret", func(c echo.Context) error {
