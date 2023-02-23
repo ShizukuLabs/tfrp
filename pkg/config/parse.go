@@ -33,6 +33,7 @@ func ParseClientConfig(filePath string) (
 	var content []byte
 	configBuffer := bytes.NewBuffer(nil)
 	for {
+		configBuffer.Reset()
 		content, err = GetRenderedConfFromFile(filePath)
 		if err != nil {
 			util.RandomSleep(1*time.Second, 0.9, 1.1)
