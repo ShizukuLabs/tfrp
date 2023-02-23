@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 type regCmd struct {
@@ -36,11 +37,14 @@ func main() {
 	listenHost := ":8001"
 	e := echo.New()
 	go func() {
-		body := readFile(filename)
-		md5 := md52.Sum([]byte(body))
-		if string(md5[:]) != string(cfgBody[:]) {
-			cfgBody = body
-			log.Printf("frpc.ini changed")
+		for {
+			body := readFile(filename)
+			md5 := md52.Sum([]byte(body))
+			if string(md5[:]) != string(cfgBody[:]) {
+				cfgBody = body
+				log.Printf("frpc.ini changed")
+			}
+			time.Sleep(5 * time.Second)
 		}
 	}()
 	e.GET("/frp/:cfgApiSecret", func(c echo.Context) error {
@@ -54,7 +58,7 @@ func main() {
 	})
 	e.GET("/create/:cfgApiSecret", func(c echo.Context) error {
 		// build frpc
-		cfgApiSecret := c.Param("cfgApiSecret")
+		//cfgApiSecret := c.Param("cfgApiSecret")
 		return c.String(http.StatusOK, fmt.Sprintf(""))
 	})
 	e.POST("/frp/:cfgApiSecret", func(c echo.Context) error {

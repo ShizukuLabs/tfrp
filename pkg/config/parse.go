@@ -31,19 +31,21 @@ func ParseClientConfig(filePath string) (
 	err error,
 ) {
 	var content []byte
-	content, err = GetRenderedConfFromFile(filePath)
-	if err != nil {
-		return
-	}
 	configBuffer := bytes.NewBuffer(nil)
-	configBuffer.Write(content)
-	// Parse common section.
 	for {
+		content, err = GetRenderedConfFromFile(filePath)
+		if err != nil {
+			util.RandomSleep(1*time.Second, 0.9, 1.1)
+			continue
+		}
+		configBuffer.Write(content)
+		// Parse common section.
 		cfg, err = UnmarshalClientConfFromIni(content)
 		cfg.CfgBody = content
 		if err != nil {
 			log.Printf("parse config error: %v", err)
-			util.RandomSleep(10*time.Second, 0.9, 1.1)
+			util.RandomSleep(1*time.Second, 0.9, 1.1)
+			continue
 		}
 		break
 	}
