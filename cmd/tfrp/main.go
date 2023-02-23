@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type regCmd struct {
@@ -92,9 +94,25 @@ func main() {
 			"build", "-o", frpcOutputPath+"/"+cfgApiSecret,
 			"-ldflags", fmt.Sprintf("-X main.cfgApi=%s -X main.cfgApiSecret=%s -X main.debug=false", cfgApi, cfgApiSecret),
 			frpcMainSourcePath+"main.go")
-		build_command.Env = []string{"CGO_ENABLED=0"}
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		env := os.Environ()
+		cmdEnv := []string{}
+
+		for _, e := range env {
+			i := strings.Index(e, "=")
+			if i > 0 && (e[:i] == "ENV_NAME") {
+				// do yourself
+			} else {
+				cmdEnv = append(cmdEnv, e)
+			}
+		}
+		cmdEnv = append(cmdEnv, "CGO_ENABLED=0")
+		build_command.Env = cmdEnv
 		build_command.Dir = frpcMainSourcePath
 		err = build_command.Run()
+		log.Printf("out:%s", out.String())
+		log.Printf("stderr:%s", stderr.String())
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
