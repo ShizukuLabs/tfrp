@@ -178,6 +178,9 @@ func (ctl *Control) Close() error {
 }
 
 func (ctl *Control) GracefulClose(d time.Duration) error {
+	if ctl == nil || ctl.pm == nil || ctl.vm == nil || ctl.conn == nil || ctl.cm == nil {
+		return nil
+	}
 	ctl.pm.Close()
 	ctl.vm.Close()
 

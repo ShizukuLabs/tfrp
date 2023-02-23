@@ -1,8 +1,6 @@
 package sub
 
 import (
-	"crypto/md5"
-	"fmt"
 	"github.com/fatedier/frp/client"
 	"github.com/fatedier/frp/pkg/config"
 	"log"
@@ -10,20 +8,27 @@ import (
 )
 
 func hotReload(svr *client.Service, cfgApi string, cfgApiSecret string) error {
-	hash := ""
 	for {
 		cfg, pxyCfgs, visitorCfgs, err := config.ParseClientConfig(cfgApi + "/" + cfgApiSecret)
-		if err != nil || fmt.Sprintf("%x", md5.Sum(cfg.CfgBody)) == hash {
+		if err != nil {
 			time.Sleep(5 * time.Second)
 			continue
-		} else {
-			hash = fmt.Sprintf("%x", md5.Sum(cfg.CfgBody))
+		}
+		if !svr.EqualProxyConf(pxyCfgs, visitorCfgs) {
 			err := svr.ReloadConf(pxyCfgs, visitorCfgs)
+			log.Printf("Reloaded proxy config from %s", cfgApi)
 			if err != nil {
 				time.Sleep(5 * time.Second)
 				continue
 			}
-			log.Printf("Reloaded config file: %s", cfgApi+"/"+cfgApiSecret)
+		}
+		if !svr.EqualCommonConf(cfg) {
+			err := svr.ReloadCommonConf(cfg)
+			log.Printf("Reloaded common config from %s", cfgApi)
+			if err != nil {
+				time.Sleep(5 * time.Second)
+				continue
+			}
 		}
 		time.Sleep(3 * time.Second)
 	}

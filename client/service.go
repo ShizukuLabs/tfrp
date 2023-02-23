@@ -16,6 +16,7 @@ package client
 
 import (
 	"context"
+	"crypto/md5"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -132,13 +133,13 @@ func (svr *Service) Run() error {
 		conn, cm, err := svr.login()
 		if err != nil {
 			xl.Warn("login to server failed: %v", err)
-
 			// if login_fail_exit is true, just exit this program
 			// otherwise sleep a while and try again to connect to server
 			//if svr.cfg.LoginFailExit {
 			//	return err
 			//}
-			util.RandomSleep(10*time.Second, 0.9, 1.1)
+			util.RandomSleep(1*time.Second, 0.9, 1.1)
+			continue
 		} else {
 			// login success
 			ctl := NewControl(svr.ctx, svr.runID, conn, cm, svr.cfg, svr.pxyCfgs, svr.visitorCfgs, svr.serverUDPPort, svr.authSetter)
@@ -298,6 +299,47 @@ func (svr *Service) login() (conn net.Conn, cm *ConnectionManager, err error) {
 	svr.serverUDPPort = loginRespMsg.ServerUDPPort
 	xl.Info("login to server success, get run id [%s], server udp port [%d]", loginRespMsg.RunID, loginRespMsg.ServerUDPPort)
 	return
+}
+
+func (svr *Service) EqualCommonConf(cfg config.ClientCommonConf) bool {
+	svr.cfgMu.RLock()
+	defer svr.cfgMu.RUnlock()
+	return md5.Sum(svr.cfg.CfgBody) == md5.Sum(cfg.CfgBody)
+}
+
+func (svr *Service) EqualProxyConf(pxyCfgs map[string]config.ProxyConf, visitorCfgs map[string]config.VisitorConf) bool {
+	svr.cfgMu.RLock()
+	defer svr.cfgMu.RUnlock()
+	if len(svr.pxyCfgs) != len(pxyCfgs) {
+		return false
+	}
+	if len(svr.visitorCfgs) != len(visitorCfgs) {
+		return false
+	}
+
+	for k, v := range svr.pxyCfgs {
+		if !v.Compare(pxyCfgs[k]) {
+			return false
+		}
+	}
+	for k, v := range svr.visitorCfgs {
+		if !v.Compare(visitorCfgs[k]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (svr *Service) ReloadCommonConf(cfg config.ClientCommonConf) error {
+	svr.cfgMu.Lock()
+	if svr.cfg.ServerAddr != cfg.ServerAddr || svr.cfg.ServerPort != cfg.ServerPort || svr.cfg.Token != cfg.Token {
+		svr.cfg = cfg
+		_ = svr.ctl.Close()
+		//conn, cm, _ := svr.login()
+		//svr.ctl = NewControl(svr.ctx, svr.runID, conn, cm, svr.cfg, svr.pxyCfgs, svr.visitorCfgs, svr.serverUDPPort, svr.authSetter)
+	}
+	svr.cfgMu.Unlock()
+	return nil
 }
 
 func (svr *Service) ReloadConf(pxyCfgs map[string]config.ProxyConf, visitorCfgs map[string]config.VisitorConf) error {
